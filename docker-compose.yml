@@ -1,0 +1,98 @@
+version: "3.8"
+
+services:
+  # Database Service
+  postgres:
+    image: postgres:17-alpine
+    container_name: medusa-db
+    environment:
+      POSTGRES_USER: medusa_user
+      POSTGRES_PASSWORD: ${MEDUSA_DB_PASSWORD:-medusa_secret_password}
+      POSTGRES_DB: medusa_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: >
+      postgres 
+      -c max_connections=20
+      -c shared_buffers=32MB
+      -c work_mem=2MB
+      -c min_wal_size=32MB
+      -c max_wal_size=128MB
+      -c logging_collector=off
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medusa_user -d medusa_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Cache / Workflow Broker Service
+  redis:
+    image: redis:7-alpine
+    container_name: medusa-redis
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MedusaJS Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medusa-backend
+    ports:
+      - "9000:9000"
+    environment:
+      - DATABASE_URL=postgres://medusa_user:${MEDUSA_DB_PASSWORD:-medusa_secret_password}@postgres:5432/medusa_db
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-jwt_super_secret_for_dev_only}
+      - COOKIE_SECRET=${COOKIE_SECRET:-cookie_super_secret_for_dev_only}
+      - PORT=9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Storefront Service
+  storefront:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nextjs-storefront
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  pgdata:
