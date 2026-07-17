@@ -1,37 +1,41 @@
 version: "3.8"
 
 services:
-  backend:
+  medusaapi:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: medusa-backend-prod
-    ports:
-      - "9000:9000"
+    container_name: medusa-backend
     environment:
-      - DB_HOST=infra-postgres
-      - DB_PORT=5432
-      - DB_USER=admin
+      - DB_HOST=${POSTGRES_DB_HOST}
+      - DB_PORT=${POSTGRES_DB_PORT}
+      - DB_USER=${DB_USER}
       - DB_PASSWORD=${POSTGRES_DB_PASSWORD}
-      - DB_NAME=medusa_db
-      - REDIS_URL=redis://infra-redis-queue:6379/5
+      - DB_NAME=${DB_NAME}
+      - REDIS_URL=redis://${REDIS_SERVICE_NAME}:${REDIS_SERVICE_PORT}/5
       - JWT_SECRET=${JWT_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
       - PORT=9000
     networks:
       - postgres-shared-network
       - frappe-shared-network
-      - storefront-network
+      - traefik-public
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 512M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.medusa-backend.rule=Host(`shop-api.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.medusa-backend.entrypoints=websecure"
+      - "traefik.http.routers.medusa-backend.tls.certresolver=myresolver"
+      - "traefik.http.services.medusa-backend.loadbalancer.server.port=9000"
 
 networks:
   postgres-shared-network:
     external: true
   frappe-shared-network:
     external: true
-  storefront-network:
-    name: storefront-network
+  traefik-public:
+    external: true

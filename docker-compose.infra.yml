@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  # Mock Redis Cache service matching infra-redis-cache
+  redis-cache:
+    image: redis:6.2-alpine
+    container_name: infra-redis-cache
+    restart: unless-stopped
+    volumes:
+      - redis-cache-data:/data
+    networks:
+      - frappe-shared-network
+
+  # Mock Redis Queue service matching infra-redis-queue
+  redis-queue:
+    image: redis:6.2-alpine
+    container_name: infra-redis-queue
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+    networks:
+      - frappe-shared-network
+  
+  # Mock PostgreSQL DB matching infra-postgres
+  postgresdb:
+    image: pgvector/pgvector:pg16
+    container_name: infra-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_secret_password}
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432" # Bound locally so you can access the DB directly
+    command: >
+      postgres
+      -c shared_buffers=64MB 
+      -c max_connections=50
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - postgres-shared-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis-cache-data:
+  redis-queue-data:
+  postgres-data:
+
+networks:
+  # Named locally so they are created automatically if they do not exist
+  frappe-shared-network:
+    name: frappe-shared-network
+  postgres-shared-network:
+    name: postgres-shared-network

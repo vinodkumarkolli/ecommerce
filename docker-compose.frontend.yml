@@ -6,19 +6,22 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: nextjs-storefront-prod
-    ports:
-      - "80:3000"
     environment:
-      - NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://medusa-backend-prod:9000
+      - NEXT_PUBLIC_MEDUSA_BACKEND_URL=https://shop-api.${DOMAIN_NAME}
     networks:
-      - storefront-network
+      - traefik-public
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 256M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.storefront.rule=Host(`shop.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.storefront.entrypoints=websecure"
+      - "traefik.http.routers.storefront.tls.certresolver=myresolver"
+      - "traefik.http.services.storefront.loadbalancer.server.port=3000"
 
 networks:
-  storefront-network:
+  traefik-public:
     external: true
-    name: storefront-network

@@ -41,7 +41,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
       )
     case isGooglePay(paymentSession?.provider_id):
       return (
-        <GooglePayPaymentButton notReady={notReady} data-testid={dataTestId} />
+        <GooglePayPaymentButton notReady={notReady} cart={cart} data-testid={dataTestId} />
       )
     default:
       return <Button disabled>Select a payment method</Button>
@@ -98,22 +98,19 @@ const StripePaymentButton = ({
               " " +
               cart.billing_address?.last_name,
             address: {
-              city: cart.billing_address?.city ?? undefined,
-              country: cart.billing_address?.country_code ?? undefined,
-              line1: cart.billing_address?.address_1 ?? undefined,
-              line2: cart.billing_address?.address_2 ?? undefined,
-              postal_code: cart.billing_address?.postal_code ?? undefined,
-              state: cart.billing_address?.province ?? undefined,
+              line1: cart.billing_address?.address_1 || "",
+              line2: cart.billing_address?.address_2 || "",
+              city: cart.billing_address?.city || "",
+              state: cart.billing_address?.province || "",
+              postal_code: cart.billing_address?.postal_code || "",
+              country: cart.billing_address?.country_code || "",
             },
-            email: cart.email,
-            phone: cart.billing_address?.phone ?? undefined,
           },
         },
       })
       .then(({ error, paymentIntent }) => {
         if (error) {
           const pi = error.payment_intent
-
           if (
             (pi && pi.status === "requires_capture") ||
             (pi && pi.status === "succeeded")
@@ -122,17 +119,16 @@ const StripePaymentButton = ({
           }
 
           setErrorMessage(error.message || null)
+          setSubmitting(false)
           return
         }
 
         if (
           (paymentIntent && paymentIntent.status === "requires_capture") ||
-          paymentIntent.status === "succeeded"
+          (paymentIntent && paymentIntent.status === "succeeded")
         ) {
-          return onPaymentCompleted()
+          onPaymentCompleted()
         }
-
-        return
       })
   }
 
@@ -140,9 +136,9 @@ const StripePaymentButton = ({
     <>
       <Button
         disabled={disabled || notReady}
+        isLoading={submitting}
         onClick={handlePayment}
         size="large"
-        isLoading={submitting}
         data-testid={dataTestId}
       >
         Place order
@@ -195,9 +191,11 @@ const ManualTestPaymentButton = ({ notReady }: { notReady: boolean }) => {
 }
 
 const GooglePayPaymentButton = ({
+  cart,
   notReady,
   "data-testid": dataTestId,
 }: {
+  cart: HttpTypes.StoreCart
   notReady: boolean
   "data-testid"?: string
 }) => {
@@ -271,8 +269,8 @@ const GooglePayPaymentButton = ({
       ],
       transactionInfo: {
         totalPriceStatus: "FINAL",
-        totalPrice: "480.00",
-        currencyCode: "INR",
+        totalPrice: cart.total.toFixed(2),
+        currencyCode: (cart.currency_code || "INR").toUpperCase(),
         countryCode: "IN",
       },
       merchantInfo: {
