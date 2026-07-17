@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medusa-backend-prod
+    ports:
+      - "9000:9000"
+    environment:
+      - DB_HOST=infra-postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=${POSTGRES_DB_PASSWORD}
+      - DB_NAME=medusa_db
+      - REDIS_URL=redis://infra-redis-queue:6379/5
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - PORT=9000
+    networks:
+      - postgres-shared-network
+      - frappe-shared-network
+      - storefront-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  postgres-shared-network:
+    external: true
+  frappe-shared-network:
+    external: true
+  storefront-network:
+    name: storefront-network

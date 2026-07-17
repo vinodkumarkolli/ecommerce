@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  storefront:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nextjs-storefront-prod
+    ports:
+      - "80:3000"
+    environment:
+      - NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://medusa-backend-prod:9000
+    networks:
+      - storefront-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  storefront-network:
+    external: true
+    name: storefront-network

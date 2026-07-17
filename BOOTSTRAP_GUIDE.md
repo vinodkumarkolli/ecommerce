@@ -59,9 +59,31 @@ To initialize your frontend:
    cd frontend
    cp .env.template .env.local
    ```
-   Verify that `NEXT_PUBLIC_MEDUSA_BACKEND_URL` is set:
+   
+   **Obtain a Publishable API Key**:
+   Because Medusa v2 requires a publishable key for storefront API requests, create one using the Medusa Admin Dashboard:
+   
+   1. Create an admin user if you haven't already:
+      ```bash
+      npx medusa user --email admin@example.com --password your_password
+      ```
+   2. Start the backend server (`npm run dev`) and navigate to `http://localhost:9000/admin`.
+   3. Log in, go to **Settings** > **Publishable API Keys**.
+   4. Click **Create API Key**, enter a name (e.g., `Web Storefront Key`), associate it with your storefront's Sales Channel, and copy the generated key (starts with `pk_...`).
+
+   Update [frontend/.env.local](file:///home/sravienterprises/Documents/ecommerce/frontend/.env.local) with the following settings:
    ```env
+   # Point to your local backend API
    NEXT_PUBLIC_MEDUSA_BACKEND_URL=http://localhost:9000
+   
+   # Paste the generated publishable API key
+   NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_your_generated_key
+   
+   # Local Storefront base URL
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+   # Set default region to India
+   NEXT_PUBLIC_DEFAULT_REGION=in
    ```
 
 4. **Install Dependencies & Start**:
