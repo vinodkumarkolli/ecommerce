@@ -1,0 +1,170 @@
+{
+  "store": {
+    "name": "Ecommerce Store",
+    "supported_currencies": [
+      {
+        "currency_code": "inr",
+        "is_default": true
+      }
+    ],
+    "default_region_name": "Indian Region",
+    "default_sales_channel_name": "Ecomm Retail",
+    "default_location_name": "Chennai Kolapakkam Warehouse"
+  },
+  "regions": [
+    {
+      "name": "Indian Region",
+      "currency_code": "inr",
+      "countries": ["in"],
+      "payment_providers": ["pp_googlepay_googlepay"],
+      "metadata": {
+        "tax_inclusive": true
+      }
+    }
+  ],
+  "tax_regions": [
+    {
+      "country_code": "in",
+      "name": "India Tax Region",
+      "tax_rate": 18,
+      "tax_code": "GST"
+    }
+  ],
+  "stock_locations": [
+    {
+      "name": "Chennai Kolapakkam Warehouse",
+      "address": {
+        "address_1": "PLOT NO. 21, VATSALYA, PADMA AVENUE",
+        "address_2": "NEAR KOLAPAKKAM BUS STOP, KOLAPAKKAM",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "postal_code": "600128",
+        "country_code": "in"
+      },
+      "sales_channels": [
+        {
+          "name": "Ecomm Retail"
+        }
+      ],
+      "fulfillment_providers": [
+        "manual"
+      ]
+    }
+  ],
+  "shipping_profiles": [
+    {
+      "name": "Indian Interstate Shipping Profile",
+      "type": "custom"
+    }
+  ],
+  "shipping_options": [
+    {
+      "name": "Standard",
+      "service_code": "standard-delivery",
+      "price_type": "flat",
+      "amount": 80,
+      "region_name": "Indian Region",
+      "provider_id": "manual",
+      "shipping_profile_name": "Indian Interstate Shipping Profile",
+      "rules": [],
+      "metadata": {
+        "delivery_time": "5-7 days"
+      }
+    },
+    {
+      "name": "Express",
+      "service_code": "express-delivery",
+      "price_type": "flat",
+      "amount": 150,
+      "region_name": "Indian Region",
+      "provider_id": "manual",
+      "shipping_profile_name": "Indian Interstate Shipping Profile",
+      "rules": [],
+      "metadata": {
+        "delivery_time": "24 hrs"
+      }
+    }
+  ],
+  "sales_channels": [
+    {
+      "name": "Ecomm Retail",
+      "description": "Sales channel for Ecommerce Store Retail operations",
+      "is_disabled": false
+    }
+  ],
+  "categories": [
+    {
+      "name": "Pain Relief Balm",
+      "handle": "pain-relief-balm",
+      "is_active": true,
+      "is_internal": false
+    }
+  ],
+  "products": [
+    {
+      "title": "Sastry Balm 12 ML",
+      "handle": "sastry-balm-12-ml",
+      "type": "Pain Relief",
+      "description": "Features:\n- SASTRY BALM is a Premium Ayurvedic Medicine\n- Provides Strong Ayurvedic Remedy\n- Persons suffering from Severe Cold or Blocking of Nostrils or Uneasy Breathing are advised to keep small quantity of Sastry Balm in a tub of hot water and inhale the vapors\n- Can be applied and massaged smoothly over Chest and Back region in Breathlessness followed by hot water fomentation\n- Safe to use for children\n\nUsed for:\n- Fast Relief from Headache\n- Cold\n- Back Pain\n- Knee Joint Pain\n- Neck Pain\n- Sprains\n- Joint Pains\n- Muscle Spasm\n- Frozen Shoulder\n- Rheumatic Pain\n\nBasic Ingredients:\n- Ajwan Ka Phool\n- Karpura Powder\n- Ganga Sindhuram\n- Guggilam Powder\n- Honeywax\n- Lavanga Tailam\n- Pudina Satwam\n- Tarpent Tailam",
+      "thumbnail": "http://localhost:9000/static/SB.png",
+      "status": "published",
+      "sales_channels": [
+        {
+          "name": "Ecomm Retail"
+        }
+      ],
+      "categories": [
+        {
+          "name": "Pain Relief Balm"
+        }
+      ],
+      "options": [
+        {
+          "title": "Repack Quantity",
+          "values": ["10", "12", "20"]
+        }
+      ],
+      "variants": [
+        {
+          "title": "10 Pack",
+          "sku": "SASB-12ML-PK10",
+          "options": {
+            "Repack Quantity": "10"
+          },
+          "prices": [
+            {
+              "currency_code": "inr",
+              "amount": 500
+            }
+          ]
+        },
+        {
+          "title": "12 Pack",
+          "sku": "SASB-12ML-PK12",
+          "options": {
+            "Repack Quantity": "12"
+          },
+          "prices": [
+            {
+              "currency_code": "inr",
+              "amount": 600
+            }
+          ]
+        },
+        {
+          "title": "20 Pack",
+          "sku": "SASB-12ML-PK20",
+          "options": {
+            "Repack Quantity": "20"
+          },
+          "prices": [
+            {
+              "currency_code": "inr",
+              "amount": 950
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

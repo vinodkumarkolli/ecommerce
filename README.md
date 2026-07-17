@@ -22,11 +22,14 @@ Run the following command to initialize the database schema inside your mock Pos
 docker exec -it infra-postgres psql -U admin -d postgres -c "CREATE DATABASE medusa_db;"
 ```
 
-### 3. Run Database Migrations
-Before running the backend on your host machine, execute the migrations to generate the tables:
+### 3. Run Database Migrations & Seeding
+Before running the backend on your host machine, execute the migrations to generate the tables and load default seed data:
 ```bash
 cd backend
 npx medusa db:migrate
+
+# Seed regions, default products (Sastry Balm), and payment options
+npm run seed
 ```
 
 ### 4. Start the Application Engines
@@ -41,6 +44,12 @@ Run both development servers:
   cd frontend
   npm run dev
   ```
+
+### 5. Create Admin User
+To log in to the admin dashboard (`http://localhost:9000/app`), run the following command in the `backend/` directory:
+```bash
+npx medusa user -e admin@sravie.in -p your_secure_password
+```
 
 ---
 
@@ -63,10 +72,22 @@ docker compose -f docker-compose.backend.yml up -d
 * **Automated Migrations**: The backend container's `entrypoint.sh` boot script automatically executes `npx medusa db:migrate` on start. **No manual commands are needed.**
 * **Domain Access**: Traefik will route incoming secure requests for `https://shop-api.sravie.in` to the Medusa backend.
 
-### 3. Deploy the Next.js Storefront Stack
+### 3. Seed Production Data
+Run the database seed command inside the running production backend container to populate regions and products:
+```bash
+docker exec -it medusa-backend npm run seed
+```
+
+### 4. Deploy the Next.js Storefront Stack
 Deploy the storefront using [docker-compose.frontend.yml](file:///home/sravienterprises/Documents/ecommerce/docker-compose.frontend.yml).
 
 ```bash
 docker compose -f docker-compose.frontend.yml up -d
 ```
 * **Domain Access**: Traefik will route secure customer requests for `https://shop.sravie.in` to the storefront container.
+
+### 5. Create Admin User
+Run the user creation command inside the running production backend container on your VPS:
+```bash
+docker exec -it medusa-backend npx medusa user -e admin@sravie.in -p your_secure_password
+```
