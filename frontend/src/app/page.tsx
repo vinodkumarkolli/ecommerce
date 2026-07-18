@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { sdk } from "../lib/medusa"
 import { Header } from "../components/Header"
@@ -8,6 +9,7 @@ import { Hero } from "../components/Hero"
 import { ProductCard } from "../components/ProductCard"
 import { CartDrawer } from "../components/CartDrawer"
 import { CheckoutOverlay } from "../components/CheckoutOverlay"
+import { useCustomer } from "../lib/providers/customer-provider"
 
 export default function Home() {
   const [theme, setTheme] = useState<string>('nord')
@@ -15,6 +17,8 @@ export default function Home() {
   const [cart, setCart] = useState<any>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const { customer, isLoading: loadingCustomer } = useCustomer()
+  const router = useRouter()
   
   // Variant Selection State
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({})
@@ -140,6 +144,28 @@ export default function Home() {
     initStore()
   }, [])
 
+  // Handle auto-opening checkout from a redirect
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search)
+      if (searchParams.get("checkout") === "true") {
+        if (!loadingCustomer && customer) {
+          const hasEmail = !!customer.email;
+          const hasPhone = !!customer.phone;
+          const hasFirstName = !!customer.first_name;
+          const hasLastName = !!customer.last_name;
+          if ((hasEmail || hasPhone) && hasFirstName && hasLastName) {
+            setCheckoutOpen(true)
+            
+            // Clean up URL so it doesn't re-trigger on refresh
+            const newUrl = window.location.pathname
+            window.history.replaceState({}, document.title, newUrl)
+          }
+        }
+      }
+    }
+  }, [customer, loadingCustomer])
+
   // Load Google Pay SDK dynamically
   useEffect(() => {
     if (!checkoutOpen || typeof window === "undefined") return
@@ -218,9 +244,18 @@ export default function Home() {
 
     try {
       // 1. Create Payment Session
-      const { cart: cartWithPayment } = await sdk.store.payment.initiatePaymentSession(cart, {
-        provider_id: "pp_googlepay_googlepay"
-      })
+      try {
+        await sdk.store.payment.initiatePaymentSession(cart, {
+          provider_id: "pp_googlepay_googlepay"
+        })
+      } catch (sessionErr: any) {
+        // If the session is already created but Medusa throws a deletion error, we can still safely proceed
+        if (sessionErr.message && sessionErr.message.includes("delete all payment sessions")) {
+          console.warn("Payment session exists, proceeding to payment window...", sessionErr)
+        } else {
+          throw sessionErr
+        }
+      }
 
       // 2. Fire GPay Sheet Overlay
       const totalPrice = (cart.total || 0).toFixed(2)
@@ -259,14 +294,25 @@ export default function Home() {
 
       if (paymentData) {
         // Complete the order
-        const order = await sdk.store.cart.complete(cart.id)
+        const orderRes = await sdk.store.cart.complete(cart.id)
         localStorage.removeItem("medusa_cart_id")
-        alert("🎉 Order placed successfully!")
-        window.location.reload()
+        
+        if (orderRes.type === "order") {
+          setCheckoutOpen(false)
+          router.push(`/account/orders/${orderRes.order.id}`)
+        } else {
+          setCheckoutStep(5)
+        }
       }
     } catch (err: any) {
       console.error(err)
-      alert(err.message || "Payment authorization failed.")
+      
+      // Silently ignore if the user simply closed the Google Pay window
+      if (err.statusCode === "CANCELED" || (err.message && err.message.includes("closed the Payment Request UI"))) {
+        return
+      }
+      
+      alert("Payment authorization failed. Please try again.")
     } finally {
       setPlacingOrder(false)
     }
@@ -275,7 +321,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100 text-base-content">
-        <Loader2 className="w-10 h-10 animate-spin text-[#5e81ac]" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     )
   }
@@ -314,6 +360,27 @@ export default function Home() {
         handleRemoveItem={handleRemoveItem}
         onCheckout={() => {
           setCartOpen(false)
+          
+          if (loadingCustomer) return;
+          
+          if (!customer) {
+            window.location.href = "/account/login?redirect=/?checkout=true";
+            return;
+          }
+          
+          // Check if user has all required basic details
+          const hasEmail = !!customer.email;
+          const hasPhone = !!customer.phone;
+          const hasFirstName = !!customer.first_name;
+          const hasLastName = !!customer.last_name;
+          
+          // They need at least (email or phone) and (first name and last name)
+          // To be safe, if they don't have first/last name, we redirect them to login capture flow
+          if ((!hasEmail && !hasPhone) || !hasFirstName || !hasLastName) {
+            window.location.href = "/account/login?redirect=/?checkout=true";
+            return;
+          }
+          
           setCheckoutOpen(true)
         }}
       />

@@ -419,3 +419,41 @@ Before implementing, watch out for these common ecommerce-specific pitfalls:
 - ❌ Not implementing proper error messages ("Error occurred" vs "Product out of stock")
 - ❌ Missing cache invalidation (stale product data, prices, inventory)
 - ❌ **Not clearing cart state after order is placed** - Cart popup shows old items because cart wasn't reset from Context/localStorage/cache
+
+## Testing Payment Gateways
+
+When testing payment flows, particularly for asynchronous failures, it is important to simulate the production behavior without needing live payment credentials:
+
+### Simulating Asynchronous Payment Failures (Test Environment)
+In Medusa's test environment, dummy providers (like a mock Google Pay or System Default provider) usually authorize payments synchronously and do not have actual webhooks to simulate delayed failures. To replicate an asynchronous failure (and test your notification listeners):
+
+1. **Place a Test Order**: Complete the checkout normally on the storefront. A successful test order is created in the backend.
+2. **Open Medusa Admin**: Log into the admin dashboard and navigate to the **Orders** section.
+3. **Cancel the Order Manually**: Find the test order you just placed, open the options menu (top right), and select **Cancel Order**.
+4. **Trigger Event**: This manual cancellation accurately mimics a payment gateway sending a "Payment Failed" webhook, firing the exact same `order.canceled` event in the backend.
+5. **Verify Notifications**: Ensure your subscribers (e.g., `order-notifications.ts`) successfully catch the `order.canceled` event and dispatch the necessary emails/WhatsApp messages to the customer.
+
+*Note: In a standard B2C flow, "Retry Payment" logic is often too complex to manage for async failures. The best practice is simply to cancel the order and instruct the customer to place a new one.*
+
+### Order Cancellation vs. Payment Refunds
+When you cancel an order in the Medusa Admin, Medusa's internal workflow automatically attempts to cancel the associated payment session by calling the `cancelPayment` method on your payment provider plugin. How this translates to real gateways (like Stripe or Razorpay) depends on the payment status:
+
+- **If the payment was "Authorized"**: The funds were only put on hold. Canceling the order automatically tells the payment gateway to void that authorization. The hold is released, and the money never actually leaves the customer's account.
+- **If the payment was "Captured"**: The funds were already fully transferred to your bank account. Canceling the order does **not** automatically push the money back. You must explicitly click the **Refund** button in the Admin dashboard, which tells Medusa to call the gateway's `refundPayment` method to initiate the return to the customer's bank account (taking standard 3-5 business days).
+
+## Styling and Theme Integration
+
+When working on the storefront UI, we use **TailwindCSS** and **DaisyUI themes**. Follow these standard semantics for working with DaisyUI:
+
+- **Use Semantic Colors:** NEVER hardcode hex colors (e.g., `#5e81ac`) directly in your classes. ALWAYS use DaisyUI semantic variables (`primary`, `secondary`, `accent`, `neutral`, `base-100`, `info`, `success`, `warning`, `error`).
+  - Example: Use `bg-primary` instead of `bg-[#5e81ac]`.
+  - Example: Use `text-success` instead of `text-[#a3be8c]`.
+- **Opacity Modifiers:** You can use Tailwind opacity modifiers on semantic colors.
+  - Example: `bg-primary/20` or `hover:bg-primary/80`.
+- **Theme Switching:** Ensure components respect `data-theme` changes. Do not hardcode a specific theme in individual components.
+- **Component Classes:** Utilize DaisyUI's built-in component classes (e.g., `btn`, `card`, `input`, `select`) before building custom UI from scratch to maintain consistent theming.
+
+**CRITICAL:** To install and load the necessary skills for DaisyUI, you must run the following command if the project relies on it:
+```bash
+npx skills add saadeghi/daisyui --agent antigravity --yes
+```

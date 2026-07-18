@@ -1,8 +1,7 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: all;
-}
-
+@import "daisyui/theme/dracula.css";
+@import "daisyui/theme/nord.css";
+@plugin "daisyui";
 :root {
   --font-outfit: 'Outfit', sans-serif;
 }

@@ -1,9 +1,25 @@
-import { 
-  AbstractPaymentProvider, 
-  PaymentProviderSessionResponse, 
-  PaymentResponse, 
-  PaymentSessionStatus 
-} from "@medusajs/framework/utils"
+import { AbstractPaymentProvider, PaymentSessionStatus } from "@medusajs/framework/utils"
+import {
+  AuthorizePaymentInput,
+  AuthorizePaymentOutput,
+  CapturePaymentInput,
+  CancelPaymentInput,
+  CancelPaymentOutput,
+  RefundPaymentInput,
+  RefundPaymentOutput,
+  RetrievePaymentInput,
+  RetrievePaymentOutput,
+  UpdatePaymentInput,
+  UpdatePaymentOutput,
+  DeletePaymentInput,
+  DeletePaymentOutput,
+  GetPaymentStatusInput,
+  GetPaymentStatusOutput,
+  ProviderWebhookPayload,
+  WebhookActionResult,
+  InitiatePaymentInput,
+  InitiatePaymentOutput
+} from "@medusajs/framework/types"
 
 export class GooglePayProviderService extends AbstractPaymentProvider {
   static identifier = "googlepay"
@@ -15,43 +31,70 @@ export class GooglePayProviderService extends AbstractPaymentProvider {
     this.config_ = config
   }
 
-  async initiatePayment(context: any): Promise<PaymentProviderSessionResponse> {
-    const { amount } = context
+  async initiatePayment(input: InitiatePaymentInput): Promise<InitiatePaymentOutput> {
     try {
       return {
+        id: "dummy_id",
+        status: PaymentSessionStatus.PENDING,
         data: {
-          amount,
+          amount: input.amount,
           currency: "INR",
-          merchantName: this.config_.merchant_name || "Sravi Enterprises",
-          payeeVpa: this.config_.payee_vpa
+          merchantName: this.config_?.merchant_name || "Sravi Enterprises",
+          payeeVpa: this.config_?.payee_vpa
         }
       }
     } catch (e: any) {
-      return { error: e.message }
+      return {
+        id: "error_id",
+        status: PaymentSessionStatus.ERROR,
+        data: { error: e.message }
+      }
     }
   }
 
-  async authorizePayment(paymentSessionData: Record<string, any>, context: Record<string, any>): Promise<PaymentResponse> {
+  async authorizePayment(input: AuthorizePaymentInput): Promise<AuthorizePaymentOutput> {
     return {
-      status: "authorized",
-      data: paymentSessionData,
+      status: PaymentSessionStatus.AUTHORIZED,
+      data: input.data,
     }
   }
 
-  async capturePayment(paymentData: Record<string, any>): Promise<Record<string, any>> {
-    return { status: "captured" }
+  async capturePayment(input: CapturePaymentInput): Promise<Record<string, any>> {
+    return { data: input.data }
   }
 
-  async refundPayment(paymentData: Record<string, any>, refundAmount: number): Promise<Record<string, any>> {
-    return { status: "refunded" }
+  async cancelPayment(input: CancelPaymentInput): Promise<CancelPaymentOutput> {
+    return { data: input.data }
   }
 
-  async cancelPayment(paymentData: Record<string, any>): Promise<Record<string, any>> {
-    return { status: "canceled" }
+  async refundPayment(input: RefundPaymentInput): Promise<RefundPaymentOutput> {
+    return { data: input.data }
   }
 
-  async getPaymentStatus(paymentSessionData: Record<string, any>): Promise<PaymentSessionStatus> {
-    return "authorized"
+  async retrievePayment(input: RetrievePaymentInput): Promise<RetrievePaymentOutput> {
+    return { data: input.data }
+  }
+
+  async updatePayment(input: UpdatePaymentInput): Promise<UpdatePaymentOutput> {
+    return { data: input.data }
+  }
+
+  async deletePayment(input: DeletePaymentInput): Promise<DeletePaymentOutput> {
+    return {}
+  }
+
+  async getPaymentStatus(input: GetPaymentStatusInput): Promise<GetPaymentStatusOutput> {
+    return { status: PaymentSessionStatus.AUTHORIZED, data: input.data }
+  }
+
+  async getWebhookActionAndData(payload: ProviderWebhookPayload["payload"]): Promise<WebhookActionResult> {
+    return {
+      action: "not_supported",
+      data: {
+        session_id: "",
+        amount: 0
+      }
+    }
   }
 }
 

@@ -49,6 +49,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <h4 className="font-semibold text-sm line-clamp-1">{item.title}</h4>
+                    {(item.variant?.title || item.variant_title) && (
+                      <p className="text-xs opacity-80">{item.variant?.title || item.variant_title}</p>
+                    )}
                     <p className="text-xs opacity-60">₹{item.unit_price} each</p>
                   </div>
                   
@@ -91,7 +94,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             </div>
             <button
               onClick={onCheckout}
-              className="btn bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none w-full h-12 font-bold rounded-xl flex items-center justify-center gap-2 transition"
+              className="btn bg-primary hover:bg-primary/80 text-white border-none w-full h-12 font-bold rounded-xl flex items-center justify-center gap-2 transition"
             >
               Checkout <ArrowRight className="w-5 h-5" />
             </button>

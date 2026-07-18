@@ -176,3 +176,11 @@ When building features that span backend and frontend:
 - Regular fetch() without headers → authentication/authorization errors
 
 See `building-with-medusa` for backend API route patterns.
+
+## Authentication & Fetching Traps (CRITICAL)
+
+When dealing with authentication flows (like login/OTP) and fetching customer data in Next.js Storefronts using Medusa v2:
+
+1. **Token Persistence across Reloads**: The Medusa JS SDK (`sdk.client.setToken()`) stores the token in short-term memory. If you force a page reload (`window.location.reload()`) immediately after login, the SDK forgets the token! **Solution**: You MUST save the token to `localStorage` upon login, and manually retrieve/inject it into a native fetch request or re-initialize it on the next page load.
+2. **SDK Header Mangling**: Be incredibly careful when using `sdk.client.fetch()` to fetch authenticated routes (like `/store/customers/me`) immediately after reading the token from `localStorage`. The SDK might accidentally override your manual `Authorization` header with a blank one if its internal state machine hasn't caught up. **Solution**: Use native browser `fetch` (with `x-publishable-api-key` and `Authorization` headers manually attached) to completely bypass the SDK when fetching sensitive profile data immediately after mounting.
+3. **Cache Busting vs Strict Validation (400 Bad Request)**: NEVER add arbitrary query parameters like `?t=12345` (timestamp cache-busters) to Medusa API routes. Medusa v2 uses strict class-validator rules and will instantly reject the request with a `400 Bad Request` ("Unrecognized fields: 't'"). **Solution**: Use HTTP Headers (`Cache-Control: no-cache, no-store, must-revalidate` and `Pragma: no-cache`) instead of query parameters to bypass Next.js caching.

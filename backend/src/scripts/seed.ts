@@ -324,8 +324,7 @@ export default async function seed({ container }: { container: MedusaContainer }
                 description: opt.metadata?.delivery_time || "",
                 code: opt.service_code
               },
-              rules: opt.rules || [],
-              metadata: opt.metadata
+              rules: opt.rules || []
             }
           ]
         })
@@ -350,7 +349,6 @@ export default async function seed({ container }: { container: MedusaContainer }
               description: prod.description,
               thumbnail: prod.thumbnail,
               status: prod.status,
-              type: prod.type ? { value: prod.type } : undefined,
               sales_channels: defaultSalesChannel ? [{ id: defaultSalesChannel.id }] : undefined,
               options: prod.options,
               variants: prod.variants.map((v: any) => ({

@@ -29,6 +29,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             )}
             <div className="flex-1 min-w-0">
               <span className="font-semibold block truncate leading-tight">{item.title}</span>
+              {(item.variant?.title || item.variant_title) && (
+                <span className="text-xs opacity-80 block truncate mt-0.5">{item.variant?.title || item.variant_title}</span>
+              )}
               <span className="text-xs opacity-60 block mt-0.5">Qty: {item.quantity} × ₹{item.unit_price}</span>
             </div>
             <span className="font-bold shrink-0">₹{item.unit_price * item.quantity}</span>
@@ -60,7 +63,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
         <div className="flex justify-between font-extrabold text-base border-t pt-3 mt-2 border-base-300">
           <span>Total Price</span>
-          <span className="text-[#5e81ac] text-lg">
+          <span className="text-primary text-lg">
             ₹{itemsSubtotal + shippingAmount}
           </span>
         </div>

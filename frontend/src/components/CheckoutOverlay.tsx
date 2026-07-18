@@ -1,6 +1,8 @@
 import React, { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, Truck, MapPin, CreditCard, Check, Loader2 } from "lucide-react"
 import { sdk } from "../lib/medusa"
+import { useCustomer } from "../lib/providers/customer-provider"
 import { OrderSummary } from "./OrderSummary"
 
 interface CheckoutOverlayProps {
@@ -106,6 +108,29 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
   handleGPayPayment,
   gpayLoaded,
 }) => {
+  const { customer, isLoading: loadingCustomer } = useCustomer()
+  const router = useRouter()
+
+  // Pre-fill shipping details if user is logged in
+  useEffect(() => {
+    if (customer && !shippingAddress.email) {
+      const defaultAddress = customer.addresses && customer.addresses.length > 0 
+        ? customer.addresses.find((a: any) => a.metadata?.is_primary === true) || customer.addresses[0]
+        : null
+      
+      setShippingAddress(prev => ({
+        ...prev,
+        first_name: prev.first_name || customer.first_name || "",
+        last_name: prev.last_name || customer.last_name || "",
+        email: prev.email || customer.email || "",
+        phone: prev.phone || customer.phone || "",
+        address_1: prev.address_1 || (defaultAddress?.address_1 || ""),
+        city: prev.city || (defaultAddress?.city || ""),
+        province: prev.province || (defaultAddress?.province || ""),
+        postal_code: prev.postal_code || (defaultAddress?.postal_code || "")
+      }))
+    }
+  }, [customer, shippingAddress.email, setShippingAddress])
 
   // Render Google Pay Button when on Step 4 and GPay is selected
   useEffect(() => {
@@ -235,13 +260,26 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
     }
     setPlacingOrder(true)
     try {
-      await sdk.store.payment.initiatePaymentSession(cart, {
-        provider_id: "pp_system_default"
-      })
-      await sdk.store.cart.complete(cart.id)
+      try {
+        await sdk.store.payment.initiatePaymentSession(cart, {
+          provider_id: "pp_system_default"
+        })
+      } catch (sessionErr: any) {
+        if (sessionErr.message && sessionErr.message.includes("delete all payment sessions")) {
+          console.warn("Payment session exists, proceeding...", sessionErr)
+        } else {
+          throw sessionErr
+        }
+      }
+      const orderRes = await sdk.store.cart.complete(cart.id)
       localStorage.removeItem("medusa_cart_id")
-      alert("🎉 Order placed successfully!")
-      window.location.reload()
+      
+      if (orderRes.type === "order") {
+        setCheckoutOpen(false)
+        router.push(`/account/orders/${orderRes.order.id}`)
+      } else {
+        setCheckoutStep(5)
+      }
     } catch (err: any) {
       console.error(err)
       alert(err.message || "Failed to place order. Please try again.")
@@ -293,13 +331,13 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
               <div key={s.step} className="flex items-center gap-2 shrink-0">
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                   checkoutStep >= s.step 
-                    ? "bg-[#5e81ac] text-white" 
+                    ? "bg-primary text-white" 
                     : "bg-base-300 text-base-content/40"
                 }`}>
                   {s.step}
                 </span>
                 <span className={`text-xs font-bold ${
-                  checkoutStep === s.step ? "text-[#5e81ac]" : "opacity-60"
+                  checkoutStep === s.step ? "text-primary" : "opacity-60"
                 }`}>
                   {s.label}
                 </span>
@@ -311,18 +349,21 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
           {/* Steps Progress Header - Mobile */}
           <div className="flex md:hidden flex-col gap-2 w-full bg-base-100 p-4 rounded-2xl shadow-sm">
             <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-[#5e81ac]">Step {checkoutStep} of 4</span>
+              <span className="text-primary">
+                {checkoutStep === 5 ? "Order Complete" : `Step ${checkoutStep} of 4`}
+              </span>
               <span className="opacity-80">
                 {checkoutStep === 1 && "Shipping Details"}
                 {checkoutStep === 2 && "Billing Address"}
                 {checkoutStep === 3 && "Payment Method"}
                 {checkoutStep === 4 && "Review & Place Order"}
+                {checkoutStep === 5 && "Success"}
               </span>
             </div>
             <div className="w-full bg-base-300 h-1.5 rounded-full overflow-hidden">
               <div 
-                className="bg-[#5e81ac] h-full transition-all duration-300" 
-                style={{ width: `${(checkoutStep / 4) * 100}%` }}
+                className="bg-primary h-full transition-all duration-300" 
+                style={{ width: `${Math.min((checkoutStep / 4) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -330,9 +371,39 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
           {/* STEP 1: Shipping Address */}
           {checkoutStep === 1 && (
             <div className="glass-panel p-6 rounded-2xl flex flex-col gap-5 shadow-sm">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-[#5e81ac]">
+              <h4 className="font-bold text-lg flex items-center gap-2 text-primary">
                 <Truck className="w-5 h-5" /> 1. Shipping Address
               </h4>
+
+              {customer?.addresses && customer.addresses.length > 0 && (
+                <div className="flex flex-col gap-2 mb-2">
+                  <label className="text-xs font-bold opacity-70">Saved Addresses</label>
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {customer.addresses.map((addr: any, idx: number) => (
+                      <button
+                        key={addr.id || idx}
+                        type="button"
+                        onClick={() => {
+                          setShippingAddress(prev => ({
+                            ...prev,
+                            first_name: customer.first_name || "",
+                            last_name: customer.last_name || "",
+                            email: customer.email || "",
+                            phone: customer.phone || "",
+                            address_1: addr.address_1 || "",
+                            city: addr.city || "",
+                            province: addr.province || "",
+                            postal_code: addr.postal_code || ""
+                          }))
+                        }}
+                        className="btn btn-sm rounded-full px-4 border bg-base-200 text-base-content border-transparent hover:bg-base-300 whitespace-nowrap"
+                      >
+                        {addr.address_name || `Address ${idx + 1}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
@@ -429,7 +500,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                   type="checkbox" 
                   checked={billingSameAsShipping} 
                   onChange={(e) => setBillingSameAsShipping(e.target.checked)}
-                  className="checkbox border-base-300 checked:bg-[#5e81ac] checked:border-[#5e81ac] checkbox-sm"
+                  className="checkbox border-base-300 checked:bg-primary checked:border-primary checkbox-sm"
                 />
                 <span className="label-text font-semibold text-sm flex-1 whitespace-normal break-words">Billing Address is same as Shipping Address</span>
               </label>
@@ -444,7 +515,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                         key={option.id}
                         className={`flex justify-between items-center p-3 rounded-xl border cursor-pointer transition ${
                           selectedShippingOption === option.id
-                            ? "border-[#5e81ac] bg-[#5e81ac]/5"
+                            ? "border-primary bg-primary/5"
                             : "border-base-300 hover:bg-base-300/40"
                         }`}
                       >
@@ -454,7 +525,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                             name="shipping_method"
                             checked={selectedShippingOption === option.id}
                             onChange={() => setSelectedShippingOption(option.id)}
-                            className="radio border-base-300 checked:bg-[#5e81ac] checked:border-[#5e81ac] radio-sm"
+                            className="radio border-base-300 checked:bg-primary checked:border-primary radio-sm"
                           />
                           <span className="text-sm font-semibold">{option.name}</span>
                         </div>
@@ -497,7 +568,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                       }
                     }}
                     disabled={placingOrder}
-                    className="btn bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none font-bold rounded-xl"
+                    className="btn bg-primary hover:bg-primary/80 text-white border-none font-bold rounded-xl"
                   >
                     {placingOrder ? <span className="loading loading-spinner"></span> : "Show Delivery Options"}
                   </button>
@@ -505,7 +576,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                   <button
                     onClick={handleProceedToStep2}
                     disabled={placingOrder}
-                    className="btn bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none font-bold rounded-xl"
+                    className="btn bg-primary hover:bg-primary/80 text-white border-none font-bold rounded-xl"
                   >
                     {placingOrder ? <span className="loading loading-spinner"></span> : "Next: Billing Address"}
                   </button>
@@ -517,19 +588,19 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
           {/* STEP 2: Billing Address */}
           {checkoutStep === 2 && (
             <div className="glass-panel p-6 rounded-2xl flex flex-col gap-5 shadow-sm">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-[#5e81ac]">
+              <h4 className="font-bold text-lg flex items-center gap-2 text-primary">
                 <MapPin className="w-5 h-5" /> 2. Billing Address
               </h4>
               
               {billingSameAsShipping ? (
-                <div className="bg-[#a3be8c]/15 text-[#a3be8c] border border-[#a3be8c]/25 rounded-xl p-4 text-sm font-semibold flex flex-col gap-2">
+                <div className="bg-success/15 text-success border border-success/25 rounded-xl p-4 text-sm font-semibold flex flex-col gap-2">
                   <span>✓ Billing Address matches your Shipping Address:</span>
                   <span className="opacity-95 font-medium pl-5 text-base-content/90">
                     {shippingAddress.first_name} {shippingAddress.last_name}, {shippingAddress.address_1}, {shippingAddress.city}, {shippingAddress.postal_code}
                   </span>
                   <button 
                     onClick={() => setBillingSameAsShipping(false)} 
-                    className="btn btn-ghost btn-xs text-[#5e81ac] self-start font-bold underline mt-2"
+                    className="btn btn-ghost btn-xs text-primary self-start font-bold underline mt-2"
                   >
                     Use a different billing address
                   </button>
@@ -616,7 +687,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
 
                   <button 
                     onClick={() => setBillingSameAsShipping(true)} 
-                    className="btn btn-ghost btn-xs text-[#5e81ac] self-start font-bold mt-1"
+                    className="btn btn-ghost btn-xs text-primary self-start font-bold mt-1"
                   >
                     ← Back to Same as Shipping Address
                   </button>
@@ -634,7 +705,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                 <button
                   onClick={handleProceedToStep3}
                   disabled={placingOrder}
-                  className="btn bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none font-bold rounded-xl"
+                  className="btn bg-primary hover:bg-primary/80 text-white border-none font-bold rounded-xl"
                 >
                   {placingOrder ? <span className="loading loading-spinner"></span> : "Next: Payment Gateway"}
                 </button>
@@ -645,7 +716,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
           {/* STEP 3: Payment Gateway */}
           {checkoutStep === 3 && (
             <div className="glass-panel p-6 rounded-2xl flex flex-col gap-5 shadow-sm">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-[#5e81ac]">
+              <h4 className="font-bold text-lg flex items-center gap-2 text-primary">
                 <CreditCard className="w-5 h-5" /> 3. Payment Gateway Selection
               </h4>
               
@@ -653,7 +724,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                 <label 
                   className={`flex justify-between items-center p-4 rounded-2xl border cursor-pointer transition ${
                     selectedPaymentProvider === "googlepay"
-                      ? "border-[#5e81ac] bg-[#5e81ac]/5"
+                      ? "border-primary bg-primary/5"
                       : "border-base-300 hover:bg-base-300/40"
                   }`}
                   onClick={() => setSelectedPaymentProvider("googlepay")}
@@ -664,7 +735,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                       name="payment_gateway"
                       checked={selectedPaymentProvider === "googlepay"}
                       readOnly
-                      className="radio border-base-300 checked:bg-[#5e81ac] checked:border-[#5e81ac] radio-sm"
+                      className="radio border-base-300 checked:bg-primary checked:border-primary radio-sm"
                     />
                     <div>
                       <span className="font-bold text-sm block">Google Pay (UPI)</span>
@@ -684,7 +755,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                 </button>
                 <button
                   onClick={handleProceedToStep4}
-                  className="btn bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none font-bold rounded-xl"
+                  className="btn bg-primary hover:bg-primary/80 text-white border-none font-bold rounded-xl"
                 >
                   Next: Review Order
                 </button>
@@ -695,7 +766,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
           {/* STEP 4: Review Order & Accept Terms */}
           {checkoutStep === 4 && (
             <div className="glass-panel p-6 rounded-2xl flex flex-col gap-5 shadow-sm">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-[#5e81ac]">
+              <h4 className="font-bold text-lg flex items-center gap-2 text-primary">
                 <Check className="w-5 h-5" /> 4. Review & Place Order
               </h4>
               
@@ -725,13 +796,13 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                 <div className="border-t pt-3 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 mt-1 border-base-300">
                   <div>
                     <span className="font-bold block opacity-70 text-xs uppercase tracking-wider mb-1">Shipping Method</span>
-                    <span className="font-semibold block text-[#5e81ac]">
+                    <span className="font-semibold block text-primary">
                       {shippingOptions.find(o => o.id === selectedShippingOption)?.name || "Standard Delivery"}
                     </span>
                   </div>
                   <div>
                     <span className="font-bold block opacity-70 text-xs uppercase tracking-wider mb-1">Payment Method</span>
-                    <span className="font-semibold block text-[#5e81ac]">
+                    <span className="font-semibold block text-primary">
                       Google Pay (UPI)
                     </span>
                   </div>
@@ -745,10 +816,10 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                     type="checkbox" 
                     checked={termsAccepted} 
                     onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="checkbox border-base-300 checked:bg-[#5e81ac] checked:border-[#5e81ac] checkbox-sm"
+                    className="checkbox border-base-300 checked:bg-primary checked:border-primary checkbox-sm"
                   />
                   <span className="label-text text-xs md:text-sm font-semibold opacity-90 leading-tight flex-1 whitespace-normal break-words">
-                    I agree to the <a href="/terms" target="_blank" className="text-[#5e81ac] underline hover:text-[#81a1c1] font-bold">Terms & Conditions</a>, <a href="/terms#refund-policy" target="_blank" className="text-[#5e81ac] underline hover:text-[#81a1c1] font-bold">Refund Policy</a>, and confirm my order details are correct.
+                    I agree to the <a href="/terms" target="_blank" className="text-primary underline hover:text-primary/80 font-bold">Terms & Conditions</a>, <a href="/terms#refund-policy" target="_blank" className="text-primary underline hover:text-primary/80 font-bold">Refund Policy</a>, and confirm my order details are correct.
                   </span>
                 </label>
               </div>
@@ -779,7 +850,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                         />
                         {placingOrder && (
                           <div className="flex items-center justify-center gap-2 text-sm opacity-70 mt-2">
-                            <Loader2 className="w-4 h-4 animate-spin text-[#5e81ac]" /> Processing order...
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" /> Processing order...
                           </div>
                         )}
                       </div>
@@ -787,6 +858,25 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* STEP 5: Success Screen */}
+          {checkoutStep === 5 && (
+            <div className="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center gap-5 shadow-sm text-center min-h-[300px]">
+              <div className="w-16 h-16 bg-success/20 text-success rounded-full flex items-center justify-center mb-2">
+                <Check className="w-8 h-8" />
+              </div>
+              <h3 className="font-bold text-2xl text-success">Order Successful!</h3>
+              <p className="opacity-80 max-w-sm">
+                Thank you for your purchase. We have received your order and will start processing it right away.
+              </p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="btn bg-primary hover:bg-primary/80 text-white border-none font-bold rounded-xl mt-4 px-8"
+              >
+                Continue Shopping
+              </button>
             </div>
           )}
 

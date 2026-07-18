@@ -52,5 +52,36 @@ module.exports = defineConfig({
         ],
       },
     },
+    // 3. Notification Module (ZeptoMail & WhatsApp)
+    {
+      resolve: "@medusajs/medusa/notification",
+      options: {
+        providers: [
+          {
+            resolve: "./src/modules/zeptomail",
+            id: "zeptomail",
+            options: {
+              channels: ["zeptomail"],
+              api_key: process.env.ZEPTOMAIL_API_KEY,
+              from_address: process.env.ZEPTOMAIL_FROM_ADDRESS || "noreply@sravie.in",
+            },
+          },
+            {
+              resolve: "./src/modules/whatsapp",
+              id: "whatsapp",
+              options: {
+                channels: ["whatsapp"],
+                phone_number_id: process.env.WHATSAPP_PHONE_ID,
+                access_token: process.env.WHATSAPP_TOKEN,
+                business_account_id: process.env.WHATSAPP_BUSINESS_ID,
+              },
+            },
+        ],
+      },
+    },
+    {
+      resolve: "./src/modules/payment-reimbursement",
+    },
   ]
 })
+

@@ -29,7 +29,7 @@ export default function TermsPage() {
 
         {/* 1. Payments Policy */}
         <div className="glass-panel p-6 rounded-2xl flex gap-4 shadow-sm">
-          <CreditCard className="w-8 h-8 text-[#5e81ac] shrink-0 mt-1" />
+          <CreditCard className="w-8 h-8 text-primary shrink-0 mt-1" />
           <div className="flex-1">
             <h4 className="font-bold text-lg mb-2">1. Payment & Order Acceptance</h4>
             <p className="text-sm opacity-85 leading-relaxed">
@@ -40,7 +40,7 @@ export default function TermsPage() {
 
         {/* 2. Shipping Timeline */}
         <div className="glass-panel p-6 rounded-2xl flex gap-4 shadow-sm">
-          <Truck className="w-8 h-8 text-[#5e81ac] shrink-0 mt-1" />
+          <Truck className="w-8 h-8 text-primary shrink-0 mt-1" />
           <div className="flex-1">
             <h4 className="font-bold text-lg mb-2">2. Shipping Timeline</h4>
             <p className="text-sm opacity-85 leading-relaxed">
@@ -52,7 +52,7 @@ export default function TermsPage() {
 
         {/* 3. Payment Gateway & Failed Transaction Scenarios */}
         <div className="glass-panel p-6 rounded-2xl flex gap-4 shadow-sm">
-          <AlertCircle className="w-8 h-8 text-[#5e81ac] shrink-0 mt-1" />
+          <AlertCircle className="w-8 h-8 text-primary shrink-0 mt-1" />
           <div className="flex-1">
             <h4 className="font-bold text-lg mb-2">3. Payment Gateway & Failed Transactions</h4>
             <p className="text-sm opacity-85 leading-relaxed mb-3">
@@ -63,7 +63,7 @@ export default function TermsPage() {
                 <strong>Debited but Mismatched Status</strong>: If money is debited from your account but checkout shows "payment failed" or doesn't generate an order, it is due to an aggregation delay. In such cases, the gateway's auto-reconciliation will refund the amount to your source account within **5 to 7 banking days**.
               </li>
               <li>
-                <strong>Manual Verification</strong>: If your amount was debited and you did not receive an order confirmation within 2 hours, please email your transaction receipt containing the UTR / Ref Number to <span className="font-semibold text-[#5e81ac]">sravienterprises1@gmail.com</span> for manual verification.
+                <strong>Manual Verification</strong>: If your amount was debited and you did not receive an order confirmation within 2 hours, please email your transaction receipt containing the UTR / Ref Number to <span className="font-semibold text-primary">sravienterprises1@gmail.com</span> for manual verification.
               </li>
             </ul>
           </div>
@@ -71,7 +71,7 @@ export default function TermsPage() {
 
         {/* 4. Product Refund Policy */}
         <div id="refund-policy" className="glass-panel p-6 rounded-2xl flex gap-4 shadow-sm scroll-mt-20">
-          <ShieldCheck className="w-8 h-8 text-[#5e81ac] shrink-0 mt-1" />
+          <ShieldCheck className="w-8 h-8 text-primary shrink-0 mt-1" />
           <div className="flex-1">
             <h4 className="font-bold text-lg mb-2">4. Product Returns & Refund Policy</h4>
             <p className="text-sm opacity-85 leading-relaxed">
@@ -82,7 +82,7 @@ export default function TermsPage() {
 
         {/* 5. Shipping Failures & RTO Policy */}
         <div className="glass-panel p-6 rounded-2xl flex gap-4 shadow-sm">
-          <RefreshCw className="w-8 h-8 text-[#5e81ac] shrink-0 mt-1" />
+          <RefreshCw className="w-8 h-8 text-primary shrink-0 mt-1" />
           <div className="flex-1">
             <h4 className="font-bold text-lg mb-2">5. Delivery Failures & Returns to Origin (RTO)</h4>
             <p className="text-sm opacity-85 leading-relaxed mb-3">

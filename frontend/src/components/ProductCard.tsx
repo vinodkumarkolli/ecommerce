@@ -43,13 +43,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <button 
                 type="button"
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-xs text-[#5e81ac] hover:underline font-bold mt-1 cursor-pointer block"
+                className="text-xs text-primary hover:underline font-bold mt-1 cursor-pointer block"
               >
                 {showFullDescription ? "Read Less" : "Read More..."}
               </button>
             )}
           </div>
-          <div className="font-extrabold text-xl text-[#5e81ac] mt-2">
+          <div className="font-extrabold text-xl text-primary mt-2">
             ₹{activePrice}
           </div>
         </div>
@@ -70,7 +70,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   onClick={() => onChangeVariant(variant.id)}
                   className={`btn flex flex-col items-center justify-center p-3 h-auto rounded-xl transition text-center gap-0.5 cursor-pointer ${
                     isSelected
-                      ? "bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none font-bold"
+                      ? "bg-primary hover:bg-primary/80 text-white border-none font-bold"
                       : "btn-outline border-base-300 hover:bg-base-300/40 text-base-content/80"
                   }`}
                 >
@@ -92,7 +92,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         type="button"
         disabled={isAdding}
         onClick={() => onAddToCart(product.id)}
-        className="btn bg-[#5e81ac] hover:bg-[#81a1c1] text-white border-none w-full h-12 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+        className="btn bg-primary hover:bg-primary/80 text-white border-none w-full h-12 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
       >
         {isAdding ? (
           <>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Outfit } from "next/font/google"
+import { CustomerProvider } from "../lib/providers/customer-provider"
 import "./globals.css"
 
 const outfit = Outfit({
@@ -26,9 +27,23 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`h-full ${outfit.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`h-full ${outfit.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('theme') || 'nord';
+                document.documentElement.setAttribute('data-theme', theme);
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-base-100 text-base-content">
-        {children}
+        <CustomerProvider>
+          {children}
+        </CustomerProvider>
       </body>
     </html>
   )
