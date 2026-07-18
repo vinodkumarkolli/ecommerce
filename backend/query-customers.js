@@ -1,5 +1,0 @@
-const { Pool } = require('pg')
-const pool = new Pool({ connectionString: 'postgres://postgres:postgres@localhost:5432/medusa' })
-pool.query("SELECT id, email, phone FROM customer WHERE phone = '9701881033'")
-  .then(res => { console.log(res.rows); pool.end() })
-  .catch(err => { console.error(err); pool.end() })
