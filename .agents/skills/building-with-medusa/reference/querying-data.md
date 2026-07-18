@@ -150,6 +150,41 @@ fields: ["product.*"]
 fields: ["id", "title", "product.id", "product.title"]
 ```
 
+### The Wildcard Computed Fields Quirk (CRITICAL)
+
+**⚠️ CRITICAL**: When using `query.graph()`, if you include the `"*"` wildcard in your `fields` array, it will **strip out** any dynamically computed fields (like `total`, `original_total`, etc.) and return them as `undefined`, even if you explicitly ask for them in the same array!
+
+```typescript
+// ❌ WRONG: `total` will evaluate to undefined because `*` strips computed fields!
+const { data } = await query.graph({
+  entity: "order",
+  fields: ["*", "total", "original_total"] 
+})
+
+// ✅ CORRECT: Explicitly define all fields without using `*` at the root
+const { data } = await query.graph({
+  entity: "order",
+  fields: [
+    "id", 
+    "display_id", 
+    "total", 
+    "original_total",
+    "items.*" // Relations using * are fine, just don't use * at the root!
+  ] 
+})
+```
+
+```typescript
+// ❌ BAD: Retrieves all fields (inefficient)
+fields: ["*"]
+
+// ❌ BAD: Retrieves all product fields (might be many)
+fields: ["product.*"]
+
+// ✅ GOOD: Only retrieves needed fields
+fields: ["id", "title", "product.id", "product.title"]
+```
+
 ## Filtering
 
 ### Exact Match

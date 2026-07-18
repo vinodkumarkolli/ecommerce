@@ -30,7 +30,15 @@ export default async function orderNotificationsHandler({
     const query = container.resolve("query")
     const { data: orders } = await query.graph({
       entity: "order",
-      fields: ["*", "shipping_address.*", "items.*"],
+      fields: [
+        "id",
+        "display_id",
+        "email",
+        "original_total",
+        "total",
+        "shipping_address.*", 
+        "items.*"
+      ],
       filters: { id: orderId }
     })
     
@@ -55,6 +63,9 @@ export default async function orderNotificationsHandler({
     message = `Your order ${order.display_id || order.id} has been canceled due to a payment failure.`
   }
 
+  const targetTotal = order.original_total || order.total;
+  const orderTotal = targetTotal?.numeric_ !== undefined ? targetTotal.numeric_ : (targetTotal ? Number(targetTotal) : 0);
+
   // 1. Send via ZeptoMail
   if (customerEmail) {
     try {
@@ -73,8 +84,6 @@ export default async function orderNotificationsHandler({
         }).join("")
       }
 
-      const targetTotal = order.original_total || order.total;
-      const orderTotal = targetTotal?.numeric_ !== undefined ? targetTotal.numeric_ : (targetTotal ? Number(targetTotal) : 0);
       const totalAmount = `₹${Number(orderTotal).toFixed(2)}`
       
       let htmlContent = `<div><b>${message}</b></div>`

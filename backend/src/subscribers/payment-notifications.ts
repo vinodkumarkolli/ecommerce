@@ -58,15 +58,18 @@ export default async function paymentNotificationsHandler({
     }
 
     // Find the most recent refund
+    let rawRefundAmount = 0;
     if (payment.refunds && payment.refunds.length > 0) {
       const sortedRefunds = [...payment.refunds].sort((a: any, b: any) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
-      refundAmount = sortedRefunds[0]?.amount || 0
+      rawRefundAmount = sortedRefunds[0]?.amount || 0
     } else {
       // Fallback
-      refundAmount = payment.amount
+      rawRefundAmount = payment.amount
     }
+    
+    refundAmount = (rawRefundAmount as any)?.numeric_ !== undefined ? (rawRefundAmount as any).numeric_ : (rawRefundAmount ? Number(rawRefundAmount) : 0);
     
   } catch (err) {
     console.error(`Could not retrieve order/payment for notification: ${err}`)

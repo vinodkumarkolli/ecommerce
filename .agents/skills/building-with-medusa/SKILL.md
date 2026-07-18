@@ -103,6 +103,7 @@ Frontend (admin dashboard/storefront via SDK)
 ### 5. Data Access Patterns (MEDIUM)
 
 - `data-price-format` - **CRITICAL**: Prices are stored as-is in Medusa (49.99 stored as 49.99, NOT in cents). Never multiply by 100 when saving or divide by 100 when displaying
+- `data-query-computed-fields` - **CRITICAL**: Using the `"*"` wildcard in `query.graph({ fields: ["*"] })` strips out computed fields (like `total`, `original_total`). You MUST explicitly define all fields instead of using `"*"` if you need computed fields.
 - `data-query-method` - Use `query.graph()` for retrieving data; use `query.index()` (Index Module) for filtering across linked modules
 - `data-query-graph` - Use `query.graph()` for cross-module queries with dot notation (without cross-module filtering)
 - `data-query-index` - Use `query.index()` when filtering by properties of linked data models in separate modules

@@ -46,24 +46,69 @@ export class WhatsAppNotificationProvider extends AbstractNotificationProviderSe
 
     // For template messages, the structure should be different
     if (data?.is_whatsapp_template && data?.template_name) {
-      let parameters: any[] = [
-        {
-          type: "text",
-          text: data?.customer_name || ""
-        },
-        {
-          type: "text",
-          text: data?.order_id || "Unknown"
-        }
-      ];
+      let components: any[] = []
 
-      // Add 3rd parameter for refund template if needed
+      // Construct Body Parameters based on template
+      let bodyParameters: any[] = [];
+
       if (data?.template_name === "amount_refunded") {
-        parameters.push({
-          type: "text",
-          text: data?.refund_amount ? `₹${(data.refund_amount || 0).toFixed(2)}` : "the amount"
+        // Body expects: 1. Name, 2. Amount, 3. Order ID
+        bodyParameters = [
+          {
+            type: "text",
+            text: data?.customer_name || ""
+          },
+          {
+            type: "text",
+            text: data?.refund_amount ? `₹${(data.refund_amount || 0).toFixed(2)}` : "the amount"
+          },
+          {
+            type: "text",
+            text: data?.order_id ? `#${data.order_id}` : "Unknown"
+          }
+        ];
+      } else {
+        // Default body for order placed/confirmed/canceled
+        bodyParameters = [
+          {
+            type: "text",
+            text: data?.customer_name || ""
+          },
+          {
+            type: "text",
+            text: data?.order_id ? `#${data.order_id}` : "Unknown"
+          }
+        ];
+      }
+
+      // If header_text is provided, create a header component
+      if (data?.header_text) {
+        components.push({
+          type: "header",
+          parameters: [
+            {
+              type: "text",
+              text: data.header_text
+            }
+          ]
+        });
+      } else if (data?.template_name === "amount_refunded") {
+        // Fallback for amount_refunded if header is explicitly required
+        components.push({
+          type: "header",
+          parameters: [
+            {
+              type: "text",
+              text: data?.refund_amount ? `₹${(data.refund_amount || 0).toFixed(2)}` : "the amount"
+            }
+          ]
         });
       }
+
+      components.push({
+        type: "body",
+        parameters: bodyParameters
+      });
 
       payload = {
         messaging_product: "whatsapp",
@@ -75,12 +120,7 @@ export class WhatsAppNotificationProvider extends AbstractNotificationProviderSe
           language: {
             code: data?.language_code || "en_US"
           },
-          components: [
-            {
-              type: "body",
-              parameters: parameters
-            }
-          ]
+          components: components
         }
       }
 
