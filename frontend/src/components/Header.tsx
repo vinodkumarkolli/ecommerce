@@ -34,9 +34,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-base-100 border-b px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-2 min-w-0 mr-2">
-        <Sparkles className="w-5 h-5 text-primary animate-pulse shrink-0" />
-        <a href="/" className="text-base sm:text-lg font-bold tracking-tight text-base-content hover:opacity-80 truncate">Sravi Enterprises</a>
+      <div className="flex items-center min-w-0 mr-2">
+        <a href="/" className="hover:opacity-80 transition-opacity flex items-center">
+          <img src="/logo.svg" alt="Sravi Enterprises Logo" className="h-8 sm:h-10 w-auto" />
+        </a>
       </div>
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Theme Selector Switcher */}

@@ -2,6 +2,7 @@
 
 import React from "react"
 import { ArrowLeft, ShieldCheck, Truck, CreditCard, RefreshCw, AlertCircle } from "lucide-react"
+import { Footer } from "../../components/Footer"
 
 export default function TermsPage() {
   return (
@@ -100,6 +101,7 @@ export default function TermsPage() {
         </div>
 
       </div>
+      <Footer />
     </main>
   )
 }

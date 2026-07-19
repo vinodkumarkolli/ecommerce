@@ -9,6 +9,7 @@ import { Hero } from "../components/Hero"
 import { ProductCard } from "../components/ProductCard"
 import { CartDrawer } from "../components/CartDrawer"
 import { CheckoutOverlay } from "../components/CheckoutOverlay"
+import { Footer } from "../components/Footer"
 import { useCustomer } from "../lib/providers/customer-provider"
 
 export default function Home() {
@@ -91,7 +92,7 @@ export default function Home() {
         // Fetch products with calculated prices in region context
         const { products } = await sdk.store.product.list({
           region_id: indiaRegion?.id,
-          fields: "*variants.calculated_price"
+          fields: "*variants.calculated_price,*type"
         })
         setProducts(products)
 
@@ -335,21 +336,37 @@ export default function Home() {
         setCartOpen={setCartOpen}
       />
       
-      <Hero />
-      
-      {/* Products Grid */}
-      <section className="px-4 max-w-lg mx-auto flex flex-col gap-6">
-        {products.map((product) => (
-          <ProductCard 
-            key={product.id}
-            product={product}
-            activeVariantId={selectedVariants[product.id] || product.variants?.[0]?.id}
-            onChangeVariant={(variantId) => setSelectedVariants(prev => ({ ...prev, [product.id]: variantId }))}
-            onAddToCart={handleAddToCart}
-            addingToCart={addingToCart}
-          />
-        ))}
-      </section>
+      {Object.entries(
+        products.reduce((acc: any, product: any) => {
+          const typeStr = product.type?.value || "Other Products";
+          if (!acc[typeStr]) acc[typeStr] = [];
+          acc[typeStr].push(product);
+          return acc;
+        }, {})
+      ).map(([typeStr, typeProducts]: [string, any], index) => {
+        const typeMetadata = typeProducts[0]?.type?.metadata || {};
+        return (
+          <div key={typeStr} className={index > 0 ? "mt-4" : ""}>
+            <Hero 
+              pillText={typeStr}
+              title={typeMetadata.Header}
+              subtitle={typeMetadata.Description}
+            />
+            <section className="px-4 max-w-lg mx-auto flex flex-col gap-6">
+            {typeProducts.map((product: any) => (
+              <ProductCard 
+                key={product.id}
+                product={product}
+                activeVariantId={selectedVariants[product.id] || product.variants?.[0]?.id}
+                onChangeVariant={(variantId) => setSelectedVariants(prev => ({ ...prev, [product.id]: variantId }))}
+                onAddToCart={handleAddToCart}
+                addingToCart={addingToCart}
+              />
+            ))}
+            </section>
+          </div>
+        );
+      })}
 
       {/* Cart bottom-sheet */}
       <CartDrawer 
@@ -420,6 +437,8 @@ export default function Home() {
         handleGPayPayment={handleGPayPayment}
         gpayLoaded={gpayLoaded}
       />
+
+      <Footer />
     </main>
   )
 }
