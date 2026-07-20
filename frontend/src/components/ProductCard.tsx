@@ -34,11 +34,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex-1 flex flex-col justify-between">
           <div>
             <h3 className="font-bold text-base leading-tight">{product.title}</h3>
-            <p className={`text-xs opacity-75 mt-1 transition-all duration-300 ${
-              showFullDescription ? "" : "line-clamp-2"
-            }`}>
-              {product.description}
-            </p>
+            {product.description && /<[a-z][\s\S]*>/i.test(product.description) ? (
+              <div 
+                className={`text-xs opacity-75 mt-1 transition-all duration-300 [&>p]:mb-1 [&>ul]:list-disc [&>ul]:ml-4 [&>ul]:mb-1 [&>li]:mb-0.5 ${
+                  showFullDescription ? "" : "line-clamp-2"
+                }`}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            ) : (
+              <p className={`text-xs opacity-75 mt-1 transition-all duration-300 ${
+                showFullDescription ? "" : "line-clamp-2"
+              }`}>
+                {product.description}
+              </p>
+            )}
             {product.description && product.description.length > 60 && (
               <button 
                 type="button"

@@ -3,6 +3,7 @@ import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils"
 import {
   createApiKeysWorkflow,
   createProductsWorkflow,
+  createCollectionsWorkflow,
   createRegionsWorkflow,
   createSalesChannelsWorkflow,
   createShippingOptionsWorkflow,
@@ -237,10 +238,10 @@ export default async function seed({ container }: { container: MedusaContainer }
         stock_location_id: stockLocation.id,
       },
       [Modules.FULFILLMENT]: {
-        fulfillment_provider_id: "manual_manual",
+        fulfillment_provider_id: "custom_fulfillment_custom_fulfillment",
       },
     })
-    logger.info(`Linked location '${loc.name}' to fulfillment provider 'manual_manual'.`)
+    logger.info(`Linked location '${loc.name}' to fulfillment provider 'custom_fulfillment_custom_fulfillment'.`)
 
     // Create Fulfillment Set for delivery (Use Query Graph to resolve service_zones)
     logger.info(`Checking fulfillment set for '${loc.name}'...`)
@@ -310,15 +311,17 @@ export default async function seed({ container }: { container: MedusaContainer }
             {
               name: opt.name,
               price_type: opt.price_type,
-              provider_id: "manual_manual",
+              provider_id: "custom_fulfillment_custom_fulfillment",
               service_zone_id: fulfillmentSet.service_zones[0].id,
               shipping_profile_id: profile.id,
-              prices: [
-                {
-                  currency_code: region.currency_code,
-                  amount: opt.amount
-                }
-              ],
+              ...(opt.price_type === 'flat' ? {
+                prices: [
+                  {
+                    currency_code: region.currency_code,
+                    amount: opt.amount
+                  }
+                ]
+              } : {}),
               type: {
                 label: opt.name,
                 description: opt.metadata?.delivery_time || "",
@@ -333,10 +336,40 @@ export default async function seed({ container }: { container: MedusaContainer }
     }
   }
 
+  // 7. Seeding Collections
+  logger.info("Seeding collections...")
+  const collectionsData = seedData.collections || []
+  for (const col of collectionsData) {
+    const existingCollections = await productService.listProductCollections({ title: col.title })
+    if (existingCollections.length === 0) {
+      await createCollectionsWorkflow(container).run({
+        input: {
+          collections: [
+            {
+              title: col.title,
+              metadata: col.metadata || {}
+            }
+          ]
+        }
+      })
+      logger.info(`Product Collection '${col.title}' created.`)
+    } else {
+      logger.info(`Product Collection '${col.title}' already exists.`)
+    }
+  }
+
   // 8. Seeding Products
   logger.info("Seeding products...")
   const productsData = seedData.products || []
   for (const prod of productsData) {
+    let collectionId = undefined;
+    if (prod.collection) {
+      const existingCollections = await productService.listProductCollections({ title: prod.collection.title })
+      if (existingCollections.length > 0) {
+        collectionId = existingCollections[0].id
+      }
+    }
+
     const existing = await productService.listProducts({ handle: prod.handle })
     let product: any
     if (existing.length === 0) {
@@ -349,11 +382,13 @@ export default async function seed({ container }: { container: MedusaContainer }
               description: prod.description,
               thumbnail: prod.thumbnail,
               status: prod.status,
+              collection_id: collectionId,
               sales_channels: defaultSalesChannel ? [{ id: defaultSalesChannel.id }] : undefined,
               options: prod.options,
               variants: prod.variants.map((v: any) => ({
                 title: v.title,
                 sku: v.sku,
+                weight: v.weight,
                 options: v.options,
                 prices: v.prices.map((p: any) => ({
                   currency_code: p.currency_code,
@@ -385,7 +420,8 @@ export default async function seed({ container }: { container: MedusaContainer }
     }
 
     // Link product to the custom shipping profile
-    const customProfile = createdProfiles["Indian Interstate Shipping Profile"]
+    const profileName = prod.shipping_profile_name || "Indian Interstate Shipping Profile"
+    const customProfile = createdProfiles[profileName]
     if (customProfile && product) {
       await link.create({
         [Modules.PRODUCT]: {

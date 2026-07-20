@@ -34,6 +34,7 @@ Comprehensive backend development guide for Medusa applications. Contains patter
 - **Creating module links?** → MUST load `reference/module-links.md` first
 - **Querying data?** → MUST load `reference/querying-data.md` first
 - **Adding authentication?** → MUST load `reference/authentication.md` first
+- **Custom Fulfillment & Calculated Shipping?** → MUST load `reference/fulfillment-shipping.md` first
 
 **Minimum requirement:** Load at least 1-2 reference files relevant to your specific task before implementing.
 

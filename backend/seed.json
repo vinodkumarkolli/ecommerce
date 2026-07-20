@@ -55,18 +55,32 @@
     {
       "name": "Indian Interstate Shipping Profile",
       "type": "custom"
+    },
+    {
+      "name": "Free Shipping Profile",
+      "type": "custom"
     }
   ],
   "shipping_options": [
     {
       "name": "Standard",
       "service_code": "standard-delivery",
-      "price_type": "flat",
-      "amount": 80,
+      "price_type": "calculated",
       "region_name": "Indian Region",
-      "provider_id": "manual",
+      "provider_id": "custom_fulfillment",
       "shipping_profile_name": "Indian Interstate Shipping Profile",
-      "rules": [],
+      "rules": [
+        {
+          "attribute": "enabled_in_store",
+          "operator": "eq",
+          "value": "true"
+        },
+        {
+          "attribute": "is_return",
+          "operator": "eq",
+          "value": "false"
+        }
+      ],
       "metadata": {
         "delivery_time": "5-7 days"
       }
@@ -77,9 +91,20 @@
       "price_type": "flat",
       "amount": 150,
       "region_name": "Indian Region",
-      "provider_id": "manual",
+      "provider_id": "custom_fulfillment",
       "shipping_profile_name": "Indian Interstate Shipping Profile",
-      "rules": [],
+      "rules": [
+        {
+          "attribute": "enabled_in_store",
+          "operator": "eq",
+          "value": "true"
+        },
+        {
+          "attribute": "is_return",
+          "operator": "eq",
+          "value": "false"
+        }
+      ],
       "metadata": {
         "delivery_time": "24 hrs"
       }
@@ -90,6 +115,15 @@
       "name": "Ecomm Retail",
       "description": "Sales channel for Ecommerce Store Retail operations",
       "is_disabled": false
+    }
+  ],
+  "collections": [
+    {
+      "title": "Sastry Balm",
+      "metadata": {
+        "Used For": "<ul><li>Fast Relief from Headache</li>\n<li>Cold</li>\n<li>Back Pain</li>\n<li>Knee Joint Pain</li>\n<li>Neck Pain</li>\n<li>Sprains</li>\n<li>Joint Pains</li>\n<li>Muscle Spasm</li>\n<li>Frozen Shoulder and</li>\n<li>Rheumatic Pain</li></ul>",
+        "Description": "<p>Sri Kodandarama Ayurveda Nilayam is an Ayurvedic Pharmacy operated from 7 generations of Ayurvedic Specialists. The organisation started gaining popularity under the aegis of Sri. Vukkadapu Ram Mohan Rao. Sastry Balm was started manufacturing from 1993.</p>\n<p>The Balm is thoroughly formulated using natural and tested ingredients that ensure to its optimum effectiveness. Sri Kodandarama Ayurveda Nilayam is a GMP certified Organisation by Dept. of Ayush, Govt of India. Owing to this, it is a reliable name in the market for the best herbal formulation in terms of Pain Balm</p>"
+      }
     }
   ],
   "categories": [
@@ -105,7 +139,7 @@
       "title": "Sastry Balm 12 ML",
       "handle": "sastry-balm-12-ml",
       "type": "Pain Relief",
-      "description": "Features:\n- SASTRY BALM is a Premium Ayurvedic Medicine\n- Provides Strong Ayurvedic Remedy\n- Persons suffering from Severe Cold or Blocking of Nostrils or Uneasy Breathing are advised to keep small quantity of Sastry Balm in a tub of hot water and inhale the vapors\n- Can be applied and massaged smoothly over Chest and Back region in Breathlessness followed by hot water fomentation\n- Safe to use for children\n\nUsed for:\n- Fast Relief from Headache\n- Cold\n- Back Pain\n- Knee Joint Pain\n- Neck Pain\n- Sprains\n- Joint Pains\n- Muscle Spasm\n- Frozen Shoulder\n- Rheumatic Pain\n\nBasic Ingredients:\n- Ajwan Ka Phool\n- Karpura Powder\n- Ganga Sindhuram\n- Guggilam Powder\n- Honeywax\n- Lavanga Tailam\n- Pudina Satwam\n- Tarpent Tailam",
+      "description": "<p>SASTRY BALM is a Premium Ayurvedic Medicine</p> <ul><li>Provides Strong Ayurvedic Remedy</li><li>Persons suffering from Severe Cold or Blocking of Nostrils or Uneasy Breathing are advised to keep small quantity of Sastry Balm in a tub of hot water and inhale the vapors</li> <li>Can be applied and massaged smoothly over Chest and Back region in Breathlessness followed by hot water fomentation</li><li>Safe to use for children</li></ul>",
       "thumbnail": "http://localhost:9000/static/SB.png",
       "status": "published",
       "sales_channels": [
@@ -118,6 +152,9 @@
           "name": "Pain Relief Balm"
         }
       ],
+      "collection": {
+        "title": "Sastry Balm"
+      },
       "options": [
         {
           "title": "Repack Quantity",
@@ -128,6 +165,7 @@
         {
           "title": "10 Pack",
           "sku": "SASB-12ML-PK10",
+          "weight": 600,
           "options": {
             "Repack Quantity": "10"
           },
@@ -141,6 +179,7 @@
         {
           "title": "12 Pack",
           "sku": "SASB-12ML-PK12",
+          "weight": 700,
           "options": {
             "Repack Quantity": "12"
           },
@@ -154,6 +193,7 @@
         {
           "title": "20 Pack",
           "sku": "SASB-12ML-PK20",
+          "weight": 1100,
           "options": {
             "Repack Quantity": "20"
           },
@@ -164,7 +204,96 @@
             }
           ]
         }
-      ]
+      ],
+      "shipping_profile_name": "Indian Interstate Shipping Profile"
+    },
+    {
+      "title": "Sastry Balm 5₹ Sachet - Trial Pack",
+      "handle": "sastry-balm-5-inr-trial",
+      "type": "Pain Relief",
+      "description": "<p>SASTRY BALM is a Premium Ayurvedic Medicine</p> <ul><li>Provides Strong Ayurvedic Remedy</li><li>Persons suffering from Severe Cold or Blocking of Nostrils or Uneasy Breathing are advised to keep small quantity of Sastry Balm in a tub of hot water and inhale the vapors</li> <li>Can be applied and massaged smoothly over Chest and Back region in Breathlessness followed by hot water fomentation</li><li>Safe to use for children</li></ul><br/><p><u><b>Content:</b></u> Red color ayurvedic balm packed in a plastic bottle and a sachet cover</p>",
+      "thumbnail": "http://localhost:9000/static/SB small.png",
+      "status": "published",
+      "sales_channels": [
+        {
+          "name": "Ecomm Retail"
+        }
+      ],
+      "categories": [
+        {
+          "name": "Pain Relief Balm"
+        }
+      ],
+      "collection": {
+        "title": "Sastry Balm"
+      },
+      "options": [
+        {
+          "title": "Repack Quantity",
+          "values": ["Trial 5 Sachet Pack"]
+        }
+      ],
+      "variants": [
+        {
+          "title": "Trial Pack",
+          "sku": "SASB-5INR-PK5",
+          "weight": 100,
+          "options": {
+            "Repack Quantity": "Trial 5 Sachet Pack"
+          },
+          "prices": [
+            {
+              "currency_code": "inr",
+              "amount": 25
+            }
+          ]
+        }
+      ],
+      "shipping_profile_name": "Free Shipping Profile"
+    },
+    {
+      "title": "Sastry Balm 5₹ Sachet - 100 Pack",
+      "handle": "sastry-balm-5-inr-100-pack",
+      "type": "Pain Relief",
+      "description": "<p>SASTRY BALM is a Premium Ayurvedic Medicine</p> <ul><li>Provides Strong Ayurvedic Remedy</li><li>Persons suffering from Severe Cold or Blocking of Nostrils or Uneasy Breathing are advised to keep small quantity of Sastry Balm in a tub of hot water and inhale the vapors</li> <li>Can be applied and massaged smoothly over Chest and Back region in Breathlessness followed by hot water fomentation</li><li>Safe to use for children</li></ul><br/><p><u><b>Content:</b></u> Red color ayurvedic balm packed in a plastic bottle and a sachet cover</p>",
+      "thumbnail": "http://localhost:9000/static/SB small.png",
+      "status": "published",
+      "sales_channels": [
+        {
+          "name": "Ecomm Retail"
+        }
+      ],
+      "categories": [
+        {
+          "name": "Pain Relief Balm"
+        }
+      ],
+      "collection": {
+        "title": "Sastry Balm"
+      },
+      "options": [
+        {
+          "title": "Repack Quantity",
+          "values": ["Pack of 100 Sachets"]
+        }
+      ],
+      "variants": [
+        {
+          "title": "Pack of 100 Sachets",
+          "sku": "SASB-5INR-PK100",
+          "weight": 500,
+          "options": {
+            "Repack Quantity": "Pack of 100 Sachets"
+          },
+          "prices": [
+            {
+              "currency_code": "inr",
+              "amount": 500
+            }
+          ]
+        }
+      ],
+      "shipping_profile_name": "Indian Interstate Shipping Profile"
     }
   ]
 }

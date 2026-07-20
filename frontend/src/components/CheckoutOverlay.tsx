@@ -158,6 +158,7 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
       const enabledOptions = (shipping_options || []).filter((o: any) => 
         o.rules && o.rules.some((r: any) => r.attribute === "enabled_in_store" && r.value === "true")
       )
+      
       setShippingOptions(enabledOptions)
       if (enabledOptions.length > 0) {
         setSelectedShippingOption(enabledOptions[0].id)
@@ -529,7 +530,9 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
                           />
                           <span className="text-sm font-semibold">{option.name}</span>
                         </div>
-                        <span className="text-sm font-bold">₹{option.amount}</span>
+                        <span className="text-sm font-bold">
+                          {option.price_type === 'calculated' || option.amount === undefined ? 'Calculated at next step' : `₹${option.amount}`}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -882,8 +885,19 @@ export const CheckoutOverlay: React.FC<CheckoutOverlayProps> = ({
 
         </div>
         
-        {/* Right Column: Order Summary Card */}
-        <div className="md:col-span-1">
+        {/* Right Column: Order Summary Card & Promo Banner */}
+        <div className="md:col-span-1 flex flex-col gap-6">
+          
+          {/* Promotional Banner (Desktop only) */}
+          <div className="hidden md:block relative w-full h-48 rounded-2xl overflow-hidden shadow-sm border border-base-200 group cursor-pointer">
+            <img src="/Srileela 2.png" alt="Promotional Offer" className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1 inline-block w-max bg-primary/20 px-2 py-0.5 rounded">Exclusive Offer</span>
+              <h4 className="text-white text-base font-bold leading-tight mb-3">Save up to 70% on premium styles today</h4>
+              <button className="bg-white text-black text-xs font-bold px-4 py-2 rounded-lg w-max hover:bg-gray-100 transition shadow">Unlock Now</button>
+            </div>
+          </div>
+
           <OrderSummary 
             cart={cart}
             selectedShippingOption={selectedShippingOption}

@@ -34,7 +34,10 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const backendUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
       const pubKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ""
       
-      const res = await fetch(`${backendUrl}/store/customers/me?fields=id,first_name,last_name,email,phone,*addresses,orders,metadata`, {
+      const url = new URL("/store/customers/me", backendUrl)
+      url.searchParams.set("fields", "id,first_name,last_name,email,phone,*addresses,orders,metadata")
+      
+      const res = await fetch(url.toString(), {
         headers: {
           "Authorization": `Bearer ${savedToken}`,
           ...(pubKey ? { "x-publishable-api-key": pubKey } : {}),

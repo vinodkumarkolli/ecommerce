@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, Truck, PackageCheck, Clock } from "lucide-react"
 import { sdk } from "../lib/medusa"
 import { Header } from "../components/Header"
 import { Hero } from "../components/Hero"
@@ -92,7 +92,7 @@ export default function Home() {
         // Fetch products with calculated prices in region context
         const { products } = await sdk.store.product.list({
           region_id: indiaRegion?.id,
-          fields: "*variants.calculated_price,*type"
+          fields: "*variants.calculated_price,*type,*collection"
         })
         setProducts(products)
 
@@ -336,24 +336,56 @@ export default function Home() {
         setCartOpen={setCartOpen}
       />
       
+      {/* Promotional Banner */}
+      <div className="w-full max-w-6xl mx-auto relative mt-2 px-4 mb-8">
+        <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 rounded-2xl overflow-hidden shadow-lg border border-base-200 group">
+          <img src="/Sreleela 1.png" alt="Promotional Banner" className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-6 md:p-8">
+            <h2 className="text-white text-2xl md:text-4xl font-extrabold tracking-tight mb-2">Premium Experience</h2>
+            <p className="text-white/90 text-sm md:text-base font-medium max-w-md">Discover our latest collection featuring exclusive designs and unmatched quality.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Shipping Features */}
+      <section className="px-4 max-w-6xl mx-auto grid grid-cols-3 gap-4 md:gap-8 mb-12">
+        <div className="flex flex-col items-center text-center bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200 transition-shadow hover:shadow-md">
+          <Truck className="w-8 h-8 md:w-10 md:h-10 text-primary mb-3 opacity-90" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wider opacity-80">Fast Delivery</span>
+        </div>
+        <div className="flex flex-col items-center text-center bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200 transition-shadow hover:shadow-md">
+          <PackageCheck className="w-8 h-8 md:w-10 md:h-10 text-primary mb-3 opacity-90" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wider opacity-80">Secure Pack</span>
+        </div>
+        <div className="flex flex-col items-center text-center bg-base-100 p-6 rounded-2xl shadow-sm border border-base-200 transition-shadow hover:shadow-md">
+          <Clock className="w-8 h-8 md:w-10 md:h-10 text-primary mb-3 opacity-90" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wider opacity-80">24/7 Support</span>
+        </div>
+      </section>
+
       {Object.entries(
         products.reduce((acc: any, product: any) => {
-          const typeStr = product.type?.value || "Other Products";
-          if (!acc[typeStr]) acc[typeStr] = [];
-          acc[typeStr].push(product);
+          const collectionStr = product.collection?.title || "Other Products";
+          if (!acc[collectionStr]) acc[collectionStr] = [];
+          acc[collectionStr].push(product);
           return acc;
         }, {})
-      ).map(([typeStr, typeProducts]: [string, any], index) => {
-        const typeMetadata = typeProducts[0]?.type?.metadata || {};
+      ).map(([collectionStr, collectionProducts]: [string, any], index) => {
+        const collectionMetadata = collectionProducts[0]?.collection?.metadata || {};
         return (
-          <div key={typeStr} className={index > 0 ? "mt-4" : ""}>
-            <Hero 
-              pillText={typeStr}
-              title={typeMetadata.Header}
-              subtitle={typeMetadata.Description}
-            />
-            <section className="px-4 max-w-lg mx-auto flex flex-col gap-6">
-            {typeProducts.map((product: any) => (
+          <div key={collectionStr} className={`max-w-6xl mx-4 xl:mx-auto p-6 md:p-8 flex flex-col md:flex-row gap-8 items-start border border-base-300 rounded-3xl bg-base-100 shadow-sm ${index > 0 ? "mt-12" : "mt-8 mb-12"}`}>
+            {/* Left Pane: Metadata */}
+            <div className="w-full md:w-5/12 md:sticky top-24">
+              <Hero 
+                pillText={collectionStr}
+                title={collectionMetadata.Header}
+                metadata={collectionMetadata}
+              />
+            </div>
+            
+            {/* Right Pane: Products listing (vertical stack) */}
+            <div className="w-full md:w-7/12 flex flex-col gap-6 pt-4 md:pt-8">
+            {collectionProducts.map((product: any) => (
               <ProductCard 
                 key={product.id}
                 product={product}
@@ -363,7 +395,7 @@ export default function Home() {
                 addingToCart={addingToCart}
               />
             ))}
-            </section>
+            </div>
           </div>
         );
       })}

@@ -13,7 +13,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 }) => {
   const itemsSubtotal = cart?.items?.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0) || 0
   const shippingAmount = selectedShippingOption
-    ? (shippingOptions.find(o => o.id === selectedShippingOption)?.amount || 0)
+    ? (cart?.shipping_methods?.find((m: any) => m.shipping_option_id === selectedShippingOption)?.amount || 
+       shippingOptions.find(o => o.id === selectedShippingOption)?.amount || 0)
     : 0
 
   return (
