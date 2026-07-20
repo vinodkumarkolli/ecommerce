@@ -97,7 +97,7 @@
         {
           "attribute": "enabled_in_store",
           "operator": "eq",
-          "value": "true"
+          "value": "false"
         },
         {
           "attribute": "is_return",

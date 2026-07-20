@@ -51,17 +51,40 @@ export default class CustomFulfillmentService extends AbstractFulfillmentProvide
     // Safely extract items from the context in Medusa V2
     const items = (context as any).items || (context as any).cart?.items || [];
 
-    // Example logic: Free shipping if only the Trial Pack is in the cart
-    const isTrialPackItem = (item: any) => item.product_handle === "trial-pack-handle";
+    // Example logic: Weight-based Shipping Cost Calculator
+    // Free shipping if only the Trial Pack is in the cart
+    const isTrialPackItem = (item: any) => 
+      item.product_title?.includes("Trial Pack") || 
+      item.variant?.title?.includes("Trial Pack") ||
+      item.variant_title?.includes("Trial Pack");
     
     const hasTrialPack = items.some(isTrialPackItem);
     const hasOtherItems = items.some((item: any) => !isTrialPackItem(item));
 
     if (hasTrialPack && !hasOtherItems) {
-      return { calculated_amount: 0 }; // Return calculated price
+      return { calculated_amount: 0 };
     }
     
-    return { calculated_amount: 80 }; // Return default price
+    // Calculate total weight (excluding trial packs)
+    let totalWeight = 0;
+    for (const item of items) {
+      if (!isTrialPackItem(item)) {
+        const weight = item.variant?.weight || 500;
+        totalWeight += weight * item.quantity;
+      }
+    }
+
+    let calculated_amount = 80;
+
+    if (totalWeight <= 1100) {
+      calculated_amount = 80;
+    } else {
+      // For every 1100g (or part thereof) above the base 1100g, add 64 INR
+      const extraWeight = totalWeight - 1100;
+      calculated_amount = 80 + (Math.ceil(extraWeight / 1100) * 64);
+    }
+    
+    return { calculated_amount }; 
   }
 
   async canCalculate(): Promise<boolean> { return true; }
@@ -71,6 +94,11 @@ export default class CustomFulfillmentService extends AbstractFulfillmentProvide
   async createReturnFulfillment(): Promise<CreateFulfillmentResult> { return { data: {} }; }
 }
 ```
+
+### Storefront UI Requirement for Calculated Shipping
+> [!IMPORTANT]
+> The default `GET /store/shipping-options` API endpoint does **not** return the `amount` for calculated shipping options. To display the calculated price, the Storefront must retrieve the amount from the Cart's `shipping_methods` object *after* the shipping option has been selected and added to the cart (via `POST /store/carts/:id/shipping-methods`). 
+> Ensure your checkout `OrderSummary` uses `cart?.shipping_methods?.find(m => m.shipping_option_id === selectedShippingOption)?.amount` instead of relying on the `shippingOptions` array.
 
 ### `src/modules/custom-fulfillment/index.ts`
 ```typescript
